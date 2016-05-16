@@ -1,0 +1,97 @@
+using ArgParse
+using IDPASE
+using Mamba
+
+function parse_commandline()
+  s = ArgParseSettings()
+  s.description = "ASE IDP (Allele Specific Expression, Isoform detection and prediction)"
+  s.commands_are_required = false
+  s.version = "0.0.1"
+  s.add_version = true
+
+  @add_arg_table s begin
+    "--true", "-t"
+      arg_type = ASCIIString
+    "--reads", "-a"
+    "--iters", "-i"
+      arg_type = Int
+      default = 10000
+      help = "Number of MCMC iterations"
+    "--burnin", "-b"
+      arg_type = Int
+      default = 1000
+      help = "Burnin"
+    "--chains", "-c"
+      arg_type = Int
+      default = 4
+      help = "Number of chains"
+    "--temp", "-d"
+      arg_type = ASCIIString
+      default = "temp"
+      help = "Temporary directory"
+    "--out", "-o"
+      arg_type = ASCIIString
+      default = "out.txt"
+      help = "Output directory"
+    "--chr", "-r"
+      arg_type = ASCIIString
+      default = "chr1"
+      help = "Chromosome"
+    "--method","-e"
+      arg_type = Int
+      default = 1
+      help = "Default MCMC method"
+    "--line", "-l"
+      arg_type = Int
+      default = 1
+      help = "loci line"
+    "--simulate", "-u"
+      action = :store_true
+      help = "Semi Simulation"
+    "--names", "-n"
+      arg_type = ASCIIString
+      nargs = '+'
+      help = "Source names"
+      required = true
+    "--matrix", "-m"
+      arg_type = Int
+      nargs = '+'
+      help = "Source matrix"
+      required = true
+  end
+
+  return parse_args(s)
+end
+
+function main()
+  parsed_args = parse_commandline()
+  println("Parsed args:")
+  for (arg,val) in parsed_args
+    println("  $arg  =>  $val")
+  end
+
+  data = read_data(parsed_args["true"], parsed_args["reads"], parsed_args["line"])
+  source_names = parsed_args["names"]
+  source_matrix = reshape(convert(Array{Bool,1}, parsed_args["matrix"]), length(source_names), round(Int, length(parsed_args["matrix"])/length(source_names)))
+
+  num_src, num_combs = size(source_matrix)
+
+  
+  println(STDERR,"Running MCMC...")
+  for j in 1:num_combs
+    use_src = source_matrix[:,j]
+    results = run_MCMC((data, parsed_args["iters"], parsed_args["burnin"], parsed_args["chains"], parsed_args["method"], use_src))
+    prefix = string(parsed_args["chr"],"::",parsed_args["line"],"::",data.gene_name)
+    if parsed_args["simulate"]
+      prefix = string("SIM::",prefix)
+    else
+      prefix = string("REAL::",prefix)
+    end
+    comb = join(source_names[use_src],"")
+    OUT = open(string(parsed_args["out"],prefix,"::","$comb.txt"),"w")
+    writedlm(OUT,results')
+    close(OUT)
+  end
+end
+
+main()
