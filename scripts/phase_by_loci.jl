@@ -126,7 +126,7 @@ function main()
     for i in 1:length(lines)
       if !lines[i]
         #println(out, "bash $(parsed_args["dir"])/launch_mcmc.sh $(parsed_args["in"])/$(parsed_args["prefix"])_true_$chr.txt $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt $(parsed_args["out"]) $i $chr x")
-        println(out, "julia -p 4 phase_by_loci_sub.jl -t $(parsed_args["in"])/$(parsed_args["prefix"])_true_$chr.txt -a $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt -o $(parsed_args["out"]) -l $i -r $chr -i $(parsed_args["iters"]) -b $(parsed_args["burnin"]) -c $(parsed_args["chains"]) -d $(parsed_args["temp"]) -n $(join(parsed_args["names"]," ")) -m $(join(vec(parsed_args["matrix"])," "))")
+        println(out, "julia -p 4 $(parsed_args["temp"])/phase_by_loci_sub.jl -t $(parsed_args["in"])/$(parsed_args["prefix"])_true_$chr.txt -a $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt -o $(parsed_args["out"]) -l $i -r $chr -i $(parsed_args["iters"]) -b $(parsed_args["burnin"]) -c $(parsed_args["chains"]) -d $(parsed_args["temp"]) -n $(join(parsed_args["names"]," ")) -m $(join(vec(parsed_args["matrix"])," "))")
       end
     end
   end

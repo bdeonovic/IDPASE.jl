@@ -600,6 +600,7 @@ function extract_X_Q!(fastq_file_name::AbstractString, loci::Dict, reads::Dict, 
       if m != nothing
         read_name = m.captures[1]
       else
+        print(STDERR, line)
         error("Improper FASTQ file")
       end
     end
@@ -846,7 +847,7 @@ function phase(data::PHASEData,max_iters::Int64,burnin::Int64,nchains::Int64,met
     inits = Dict{Symbol,Any}[ Dict{Symbol,Any}(:X => reshape(PHASE[:X],PHASE[:n]*PHASE[:m],1)[:], :h => [rand(0:1) for j in 1:(PHASE[:m]-1)], :rho => rand() ) for i in 1:nchains]
     scheme = NaN
     if method == 1
-      scheme = [ BMC3([:h], convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
+      scheme = [ BMC3([:h], indexset = convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
     elseif method == 2
       scheme = [ BMG([:h]), Slice([:rho],[0.5],transform=true)]
     elseif method == 3
@@ -950,8 +951,8 @@ function make_X_Q(args::Tuple{AbstractString, Dict, Bool, Bool})
     @time get_snps!(loci_dict, "$(parsed_args["temp"])/$(chr)_gpd.bed", "$(parsed_args["temp"])/$(chr)_vcf.bed", parsed_args["temp"], chr, fpkm_dict)
     @time get_gene_level_results(loci_dict, parsed_args["results"], parsed_args["type"], !parsed_args["estimate"])
 
-    if parsed_args["print"]
-      REGIONS = open(string(parsed_args["out"],"_inter","_$(chr).txt"),"w")
+    if false
+      REGIONS = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_inter","_$(chr).txt"),"w")
       i = 1
       for (gene_name, loci) in loci_dict
         println(REGIONS, string(i, "\t", gene_name,"\t", join(loci.snps, ","),"\t", join(loci.est_h,""),"\t", loci.rho_mode ))
@@ -978,9 +979,10 @@ function make_X_Q(args::Tuple{AbstractString, Dict, Bool, Bool})
       println(STDERR,"Cleaning up...")
       all_data = cleanup!(loci_dict);
 
-      @time bin_reads(loci_dict, isoform_dict, chr, parsed_args["temp"], stitched = (parsed_args["phase_psl"] != nothing))
-      EXTRA = open(string(parsed_args["out"],"_extra_SPECIAL","_$(chr).txt"),"w")
-      REGIONS = open(string(parsed_args["out"],"_regions","_$(chr).txt"),"w")
+      #@time bin_reads(loci_dict, isoform_dict, chr, parsed_args["temp"], stitched = (parsed_args["phase_psl"] != nothing))
+      @time bin_reads(loci_dict, isoform_dict, chr, parsed_args["temp"], stitched = false)
+      EXTRA = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_extra_SPECIAL","_$(chr).txt"),"w")
+      REGIONS = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_regions","_$(chr).txt"),"w")
       i = 1
       for (gene_name, loci) in loci_dict
         println(EXTRA,string(i,"\t",gene_name,"\t",length(loci.effective_isoform_lengths),"\t",length(loci.effective_region_lengths),"\t",join(loci.regions_in_isoforms,","),"\t",join(loci.Y,","),"\t",join(loci.isoform_map,","),"\t",join(loci.effective_isoform_lengths,","),"\t",join(loci.effective_region_lengths,","),"\t",join(loci.isoform_names,","))) 
@@ -1013,8 +1015,8 @@ function make_X_Q(args::Tuple{AbstractString, Dict, Bool, Bool})
     println(STDERR,"Cleaning up...")
     all_data = cleanup!(loci_dict)
     if !parsed_args["only_sim"]
-      TRUE = open(string(parsed_args["out"],"_true","_$(chr).txt"),"w")
-      READS = open(string(parsed_args["out"],"_reads","_$(chr).txt"),"w")
+      TRUE = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_true","_$(chr).txt"),"w")
+      READS = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_reads","_$(chr).txt"),"w")
       for i in 1:length(all_data)
         loci = loci_dict[all_data[i].gene_name]
         println(TRUE,string(i,"\t","NA","\t",join(all_data[i].true_h,""),"\t",size(all_data[i].X,1),"\t",size(all_data[i].X,2),"\t",join(vec(all_data[i].X),","),"\t",join(vec(all_data[i].Q),","),"\t",all_data[i].gene_name,"\t","NA","\t",join(all_data[i].read_counts,","),"\t",join(loci.snps,","),"\t",join(loci.ref,","),"\t",join(loci.alt,","),"\t",chr))
@@ -1024,7 +1026,7 @@ function make_X_Q(args::Tuple{AbstractString, Dict, Bool, Bool})
       close(READS)
     end
     if sim
-      sim_data = simulate_data(all_data, string(parsed_args["out"],"_sim","_$(chr).txt"))
+      sim_data = simulate_data(all_data, string(parsed_args["out"],"/",parsed_args["prefix"],"_sim","_$(chr).txt"))
     end
   end
 end

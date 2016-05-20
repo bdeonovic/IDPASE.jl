@@ -55,9 +55,6 @@ function parse_commandline()
     "--results", "-r"
       arg_type = ASCIIString
       help = "MCMC results"
-    "--phase_psl", "-p"
-      arg_type = ASCIIString
-      help = "PSL for isoform specific ASE"
     "--type", "-t"
       arg_type = ASCIIString
       default = "SGSTGS"
@@ -70,8 +67,8 @@ function parse_commandline()
       default = 100
     "--only_sim", "-n"
       action = :store_true
-    "--print", "-m"
-      action = :store_true
+    "--prefix", "-p"
+      arg_type = ASCIIString
   end
 
   return parse_args(s)
@@ -102,9 +99,9 @@ function main()
     for i in 1:num_src_types
       @time num_reads[i] = psl_to_bed2(parsed_args["psl"][i],chr = parsed_args["chr"], output_dir = parsed_args["temp"],output_file_name="psl$i.bed")
     end
-    if parsed_args["phase_psl"] != nothing
-      @time num_reads = psl_to_bed2(parsed_args["phase_psl"], chr = parsed_args["chr"], output_dir = parsed_args["temp"],output_file_name="psl_phase.bed")
-    end
+    #if parsed_args["phase_psl"] != nothing
+    #  @time num_reads = psl_to_bed2(parsed_args["phase_psl"], chr = parsed_args["chr"], output_dir = parsed_args["temp"],output_file_name="psl_phase.bed")
+    #end
   end
 
   args = collect(zip(parsed_args["chr"], 
