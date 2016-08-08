@@ -58,6 +58,10 @@ function parse_commandline()
       nargs = '+'
       help = "Source matrix"
       default = [1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1]
+    "--schedule", "-s"
+      arg_type = Float64
+      nargs = '+'
+      default = [1.0, 0.5, 0.25, 0.125]
   end
 
   return parse_args(s)
@@ -78,9 +82,9 @@ function main()
 
   
   println(STDERR,"Running MCMC...")
-  for j in 1:num_combs
+  for j in 1:num_combs, k in parsed_args["schedule"]
     use_src = source_matrix[:,j]
-    results = run_MCMC((data, parsed_args["iters"], parsed_args["burnin"], parsed_args["chains"], parsed_args["method"], use_src, parsed_args["names"]))
+    results = run_MCMC((data, parsed_args["iters"], parsed_args["burnin"], parsed_args["chains"], parsed_args["method"], use_src, parsed_args["names"], k))
     new_gene_name = replace(data.gene_name, r"/", s"|")
     prefix = string(parsed_args["chr"],"::",parsed_args["line"],"::",new_gene_name)
     if parsed_args["simulate"]
@@ -89,7 +93,7 @@ function main()
       prefix = string("REAL::",prefix)
     end
     comb = join(source_names[use_src],"")
-    OUT = open(string(parsed_args["out"],prefix,"::","$(comb).txt"),"w")
+    OUT = open(string(parsed_args["out"],prefix,"::","$(comb)::$(k).txt"),"w")
     writedlm(OUT,results')
     close(OUT)
   end

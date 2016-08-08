@@ -847,7 +847,8 @@ function phase(data::PHASEData,max_iters::Int64,burnin::Int64,nchains::Int64,met
     inits = Dict{Symbol,Any}[ Dict{Symbol,Any}(:X => reshape(PHASE[:X],PHASE[:n]*PHASE[:m],1)[:], :h => [rand(0:1) for j in 1:(PHASE[:m]-1)], :rho => rand() ) for i in 1:nchains]
     scheme = NaN
     if method == 1
-      scheme = [ BMC3([:h], indexset = convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
+      #scheme = [ BMC3([:h], indexset = convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
+      scheme = [ BMC3([:h], convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
     elseif method == 2
       scheme = [ BMG([:h]), Slice([:rho],[0.5],transform=true)]
     elseif method == 3
@@ -889,16 +890,19 @@ function haplotype_map(sim::ModelChains)
   return (max_h, haplo_modes[max_h][2]/haplo_modes[max_h][1])
 end
 
-function run_MCMC(args::Tuple{PHASEData,Int64,Int64,Int64,Int64,Vector{Bool},Vector{ASCIIString}})
-  data, iters, burnin, nchains, method, use_src, type_names = args
+function run_MCMC(args::Tuple{PHASEData,Int64,Int64,Int64,Int64,Vector{Bool},Vector{ASCIIString},Float64})
+  data, iters, burnin, nchains, method, use_src, type_names, subsample = args
   n0 = 1
   reads_to_use = Int64[]
+  read_counts_used = zeros(length(use_src))
   type_name = join(type_names[find(use_src)],"")
   for s in 1:length(use_src)
     if use_src[s]
       reads = n0:(n0 + data.read_counts[s] -1)
       num_lr = length(reads)
-      append!(reads_to_use, reads)
+      sampled_reads = sample(reads, convert(Int64, ceil(subsample * num_lr)), replace = false)
+      append!(reads_to_use, sampled_reads)
+      read_counts_used[s] = length(sampled_reads)
     end
     n0 += data.read_counts[s]
   end
@@ -930,15 +934,17 @@ function run_MCMC(args::Tuple{PHASEData,Int64,Int64,Int64,Int64,Vector{Bool},Vec
 
     h_mode, cond_rho = haplotype_map(sim)
 
-    result1 = [length(data.read_counts),join(data.read_counts,","),n,m,data.gene_name,data.isoform_name, join(data.true_h,""),join(h_0,""), join(h_mode,""), cond_rho, rho_mode, q.value[1,3], d.value[1,1], q.value[1,1], q.value[1,5],hpd(sim).value[1,1],hpd(sim).value[1,2],d.value[1,5],run_time,g,lth,gth,sim.model.iter, sim.model.burnin, join(data.coords,","), type_name]  
+    result1 = [length(data.read_counts),join(data.read_counts,","),n,m,data.gene_name,data.isoform_name, join(data.true_h,""),join(h_0,""), join(h_mode,""), cond_rho, rho_mode, q.value[1,3], d.value[1,1], q.value[1,1], q.value[1,5],hpd(sim).value[1,1],hpd(sim).value[1,2],d.value[1,5],run_time,g,lth,gth,sim.model.iter, sim.model.burnin, join(data.coords,","), type_name, subsample, join(read_counts_used,",")]  
     return result1
   else
-    result1 = [length(data.read_counts); join(data.read_counts,","); n; m; data.gene_name; data.isoform_name; join(data.true_h,""); ["NA" for i in 1:18]; type_name]  
+    result1 = [length(data.read_counts); join(data.read_counts,","); n; m; data.gene_name; data.isoform_name; join(data.true_h,""); ["NA" for i in 1:18]; type_name, subsample, join(read_counts_used,",")]  
     return result1
   end
 end
-function make_X_Q(args::Tuple{AbstractString, Dict, Bool, Bool})
-  chr, parsed_args, sim, isoform = args
+function make_X_Q(args::Tuple{AbstractString, Dict})
+  chr, parsed_args = args
+  sim = parsed_args["simulate"]
+  isoform = parsed_args["isoform"]
   num_src_types = length(parsed_args["psl"])
   read_dict = Dict{ASCIIString,Set{ASCIIString}}()
   fpkm_dict = Dict{ASCIIString,Array{Float64,1}}()

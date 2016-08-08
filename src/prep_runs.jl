@@ -105,9 +105,7 @@ function main()
   end
 
   args = collect(zip(parsed_args["chr"], 
-                    [parsed_args for i in 1:length(parsed_args["chr"])], 
-                    [parsed_args["simulate"] for i in 1:length(parsed_args["chr"])],
-                    [parsed_args["isoform"] for i in 1:length(parsed_args["chr"])] ))
+                    Dict{ASCIIString, Any}[parsed_args for i in 1:length(parsed_args["chr"])]))
   @time pmap(make_X_Q, args)
 end
 

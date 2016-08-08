@@ -44,6 +44,10 @@ function parse_commandline()
       nargs = '+'
       help = "Source matrix"
       default = [1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1]
+    "--schedule", "-s"
+      arg_type = Float64
+      nargs = '+'
+      default = [1.0, 0.5, 0.25, 0.125]
   end
 
   return parse_args(s)
@@ -71,7 +75,7 @@ function main()
   for file in readdir(parsed_args["in"])
     m = match(Regex("$(parsed_args["prefix"])_(true|sim)_(\\w*).txt"),file)
     if m != nothing
-      num_loci = parse(Int64, split(readall(`wc -l $(parsed_args["in"])/$file`))[1])
+      num_loci = parse(Int64, split(readall(`wc -l $(parsed_args["in"])/$file`))[1]) * length(parsed_args["schedule"])
       if m.captures[1] == "true"
         real_completed[m.captures[2]] = falses(num_loci)
       elseif m.captures[1] == "sim"
@@ -80,7 +84,7 @@ function main()
     end
   end
   for file in readdir(parsed_args["out"])
-    m = match(Regex("(REAL|SIM)::(\\w*)::(\\d*)::([\\w\\[\\]\\/\\.\\-]*)::($(join(name_comb,"|"))).txt"),file)
+    m = match(Regex("(REAL|SIM)::(\\w*)::(\\d*)::([\\w\\[\\]\\/\\.\\-]*)::($(join(name_comb,"|")))::(\\d*).txt"),file)
     if m != nothing
       sim = m.captures[1]
       chr = m.captures[2]
@@ -88,32 +92,35 @@ function main()
       gene_name = m.captures[4]
       gene_name = replace(gene_name, r"/", s"|")
       data_type = m.captures[5]
+      subsample = parse(Float64, m.captures[6])
       if sim == "REAL"
         if !haskey(real_data, gene_name)
-          real_data[gene_name] = falses(length(name_comb))
+          real_data[gene_name] = falses(length(name_comb) * length(parsed_args["schedule"]))
         end
         if data_type in name_comb
-          idx = findfirst((x)-> x == data_type,name_comb)
-          real_data[gene_name][idx] = true
+          idx1 = findfirst((x)-> x == data_type,name_comb)
+          idx2 = findfirst((x)-> x == subsample,parsed_args["schedule"])
+          real_data[gene_name][(idx2-1)*length(name_comb) + idx1] = true
         else
           warn("unknown data type")
         end
-        if sum(real_data[gene_name]) == length(name_comb)
+        if sum(real_data[gene_name]) == length(name_comb) * length(parsed_args["schedule"])
           if haskey(real_completed, chr)
             real_completed[chr][line_num] = true
           end
         end
       elseif sim == "SIM"
         if !haskey(sim_data, gene_name)
-          sim_data[gene_name] = falses(length(name_comb))
+          sim_data[gene_name] = falses(length(name_comb) * length(parsed_args["schedule"]))
         end
         if data_type in name_comb
-          idx = findfirst((x)-> x == data_type,name_comb)
-          sim_data[gene_name][idx] = true
+          idx1 = findfirst((x)-> x == data_type,name_comb)
+          idx2 = findfirst((x)-> x == subsample,parsed_args["schedule"])
+          sim_data[gene_name][(idx2-1)*length(name_comb) + idx1] = true
         else
           warn("unknown data type")
         end
-        if sum(sim_data[gene_name]) == length(name_comb)
+        if sum(sim_data[gene_name]) == length(name_comb) * length(parsed_args["schedule"])
           if haskey(sim_completed, chr)
             sim_completed[chr][line_num] = true
           end
@@ -125,20 +132,18 @@ function main()
   for (chr, lines) in real_completed
     for i in 1:length(lines)
       if !lines[i]
-        #println(out, "bash $(parsed_args["dir"])/launch_mcmc.sh $(parsed_args["in"])/$(parsed_args["prefix"])_true_$chr.txt $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt $(parsed_args["out"]) $i $chr x")
-        println(out, "julia -p 4 $(parsed_args["temp"])/phase_by_loci_sub.jl -t $(parsed_args["in"])/$(parsed_args["prefix"])_true_$chr.txt -a $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt -o $(parsed_args["out"]) -l $i -r $chr -i $(parsed_args["iters"]) -b $(parsed_args["burnin"]) -c $(parsed_args["chains"]) -d $(parsed_args["temp"]) -n $(join(parsed_args["names"]," ")) -m $(join(vec(parsed_args["matrix"])," "))")
+        println(out, "julia -p $(parsed_args["chains"]) $(parsed_args["temp"])/phase_by_loci_sub.jl -t $(parsed_args["in"])/$(parsed_args["prefix"])_true_$chr.txt -a $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt -o $(parsed_args["out"]) -l $i -r $chr -i $(parsed_args["iters"]) -b $(parsed_args["burnin"]) -c $(parsed_args["chains"]) -d $(parsed_args["temp"]) -n $(join(parsed_args["names"]," ")) -m $(join(vec(parsed_args["matrix"])," ")) -s $(join(parsed_args["schedule"]," "))")
       end
     end
   end
-  #=
   for (chr, lines) in sim_completed
     for i in 1:length(lines)
       if !lines[i]
-        println(out,"bash $(parsed_args["dir"])/launch_mcmc.sh $(parsed_args["in"])/$(parsed_args["prefix"])_sim_$chr.txt $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt $(parsed_args["out"]) $i $chr u")
+        #println(out,"bash $(parsed_args["dir"])/launch_mcmc.sh $(parsed_args["in"])/$(parsed_args["prefix"])_sim_$chr.txt $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt $(parsed_args["out"]) $i $chr u")
+        println(out, "julia -p $(parsed_args["chains"]) $(parsed_args["temp"])/phase_by_loci_sub.jl -t $(parsed_args["in"])/$(parsed_args["prefix"])_sim_$chr.txt -a $(parsed_args["in"])/$(parsed_args["prefix"])_reads_$chr.txt -o $(parsed_args["out"]) -l $i -r $chr -i $(parsed_args["iters"]) -b $(parsed_args["burnin"]) -c $(parsed_args["chains"]) -d $(parsed_args["temp"]) -n $(join(parsed_args["names"]," ")) -m $(join(vec(parsed_args["matrix"])," ")) -s $(join(parsed_args["schedule"]," "))")
       end
     end
   end
-  =#
   close(out)
     
 

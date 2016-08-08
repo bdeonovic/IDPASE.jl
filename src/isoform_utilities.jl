@@ -440,7 +440,7 @@ end
 function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, mcmc_result_file::AbstractString, result_type::AbstractString, use_true::Bool=false)
   mcmc_results_vec = readlines(open(mcmc_result_file, "r"))
   num_mcmc_results = length(mcmc_results_vec)
-  mcmc_results = Array(Any, length(mcmc_results_vec), 26)
+  mcmc_results = Array(Any, length(mcmc_results_vec), 28)
   for i in 1:num_mcmc_results
     fields = split(mcmc_results_vec[i])
     mcmc_results[i,1] = fields[1]
@@ -469,6 +469,8 @@ function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,
     mcmc_results[i,24] = fields[24] == "NA" ? NaN : parse(Int64, fields[24])
     mcmc_results[i,25] = fields[25]
     mcmc_results[i,26] = fields[26]
+    mcmc_results[i,27] = parse(Float64, fields[27])
+    mcmc_results[i,28] = fields[28]
 
     num_sr = [parse(Int64, s) for s in split(mcmc_results[i,2],",")][1]
 
