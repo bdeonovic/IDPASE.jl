@@ -475,7 +475,7 @@ function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,
     num_sr = [parse(Int64, s) for s in split(mcmc_results[i,2],",")][1]
 
     if mcmc_results[i,5] in keys(loci_dict)
-      if mcmc_results[i,26] != result_type #"SGSSNY_1.0"
+      if (mcmc_results[i,26] != result_type) || (mcmc_results[i,27] != 1.0) #"SGSSNY_1.0"
         continue
       end
       if (mcmc_results[i,8] == "NA") || (length(loci_dict[mcmc_results[i,5]].snps) != mcmc_results[i,4]) || num_sr > 10000
@@ -783,9 +783,10 @@ function phase_isoform_sub(y::Vector{Int}, ls::Vector{Int}, lk::Vector{Int}, C::
     end
     return -sum(y .* log(lambda)) + sum(lambda)
   end
-  d3 = TwiceDifferentiableFunction(negloglik, negscore!, neghessian!)
+  #d3 = TwiceDifferentiableFunction(negloglik, negscore!, neghessian!)
   init = log(M * ones(K)/K ./ lk)
-  optimize(d3, init, iterations=1000, method=:newton)
+  #optimize(d3, init, iterations=1000, method=:newton)
+  optimize(negloglik, negscore!, neghessian!, init, Newton(), OptimizationOptions(iterations=1000))
 end
 function phase_isoform_sub_sim(y::Vector{Int}, ls::Vector{Int}, lk::Vector{Int}, C::Matrix{Int}, map::Vector{Int})
   M = sum(y)
@@ -804,35 +805,39 @@ function phase_isoform_sub_sim(y::Vector{Int}, ls::Vector{Int}, lk::Vector{Int},
   end
   lambda_0 = ls .* C * theta_0
   sim_y = [rand(Poisson(s)) for s in lambda_0]
-  function loglik(theta::Vector)
+  function negloglik(theta::Vector)
     value = 0.0
     lambda = ls .* C * exp(theta)
-    return -sum(sim_y .* log(lambda)) + sum(lambda)
+    return -sum(y .* log(lambda)) + sum(lambda)
   end
-  function score!(theta::Vector, storage::Vector)
+  function negscore!(theta::Vector, storage::Vector)
     for j in 1:K
-      storage[j] = -sum((sim_y .* C[:,j] * exp(theta[j])) ./ (C * exp(theta)) - ls .* C[:,j] * exp(theta[j]))
+      storage[j] = -sum((y .* C[:,j] * exp(theta[j])) ./ (C * exp(theta)) - ls .* C[:,j] * exp(theta[j]))
     end
   end
-  function hessian!(theta::Vector, storage::Matrix)
+  function neghessian!(theta::Vector, storage::Matrix)
     for j in 1:K
       for l in 1:K
-        storage[j,l] = sum((sim_y .* C[:,j] .* C[:,l] * exp(theta[j]) * exp(theta[l])) ./ (C * exp(theta)) .^ 2)
+        storage[j,l] = sum((y .* C[:,j] .* C[:,l] * exp(theta[j]) * exp(theta[l])) ./ (C * exp(theta)) .^ 2)
         if j == l
           storage[j,l] += sum(ls .* C[:,j] * exp(theta[j]))
         end
       end
     end
   end
-  function loglik_and_score!(theta::Vector, storage)
+  function negloglik_and_score!(theta::Vector, storage)
     value = 0.0
     lambda = ls .* C * exp(theta)
     for j in 1:K
-      storage[j] = -sum((sim_y .* C[:,j] * exp(theta[j])) ./ (C[:,:] * exp(theta)) - ls .* C[:,j] * exp(theta[j]))
+      storage[j] = -sum((y .* C[:,j] * exp(theta[j])) ./ (C[:,:] * exp(theta)) - ls .* C[:,j] * exp(theta[j]))
     end
-    return -sum(sim_y .* log(lambda)) + sum(lambda)
+    return -sum(y .* log(lambda)) + sum(lambda)
   end
-  d3 = TwiceDifferentiableFunction(loglik, score!, hessian!)
+  #d3 = TwiceDifferentiableFunction(loglik, score!, hessian!)
   init = log(sum(sim_y) * ones(K)/K ./ lk)
-  return optimize(d3, init, iterations=1000, method=:newton), theta_0, tau_0, sim_y
+  #return optimize(d3, init, iterations=1000, method=:newton), theta_0, tau_0, sim_y
+  #d3 = TwiceDifferentiableFunction(negloglik, negscore!, neghessian!)
+  #init = log(M * ones(K)/K ./ lk)
+  #optimize(d3, init, iterations=1000, method=:newton)
+  return optimize(negloglik, negscore!, neghessian!, init, Newton(), OptimizationOptions(iterations=1000)), theta_0, tau_0, sim_y
 end

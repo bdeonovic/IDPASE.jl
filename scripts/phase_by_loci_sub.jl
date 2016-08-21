@@ -57,7 +57,7 @@ function parse_commandline()
       arg_type = Int
       nargs = '+'
       help = "Source matrix"
-      default = [1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1]
+      default = [1, 0, 0, 1, 1, 0, 0, 1, 0]
     "--schedule", "-s"
       arg_type = Float64
       nargs = '+'
