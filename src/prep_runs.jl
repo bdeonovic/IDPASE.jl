@@ -69,6 +69,8 @@ function parse_commandline()
       action = :store_true
     "--prefix", "-p"
       arg_type = ASCIIString
+    "--subsample"
+      arg_type = Float64
   end
 
   return parse_args(s)

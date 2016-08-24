@@ -960,7 +960,7 @@ function make_X_Q(args::Tuple{AbstractString, Dict})
     println(STDERR, "Getting isoforms with SNPS...")
     @time isoform_dict, loci_dict, transcript_dict = init_loci("$(parsed_args["temp"])/$(chr)_gpd.bed", chr, num_src_types, fpkm_dict); 
     @time get_snps!(loci_dict, "$(parsed_args["temp"])/$(chr)_gpd.bed", "$(parsed_args["temp"])/$(chr)_vcf.bed", parsed_args["temp"], chr, fpkm_dict)
-    @time get_gene_level_results(loci_dict, parsed_args["results"], parsed_args["type"], !parsed_args["estimate"])
+    @time get_gene_level_results(loci_dict, parsed_args["results"], parsed_args["type"], parsed_args["subsample"], !parsed_args["estimate"] )
 
     if false
       REGIONS = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_inter","_$(chr).txt"),"w")
@@ -991,7 +991,7 @@ function make_X_Q(args::Tuple{AbstractString, Dict})
       all_data = cleanup!(loci_dict);
 
       #@time bin_reads(loci_dict, isoform_dict, chr, parsed_args["temp"], stitched = (parsed_args["phase_psl"] != nothing))
-      @time bin_reads(loci_dict, isoform_dict, chr, parsed_args["temp"], stitched = false)
+      @time bin_reads(loci_dict, isoform_dict, chr, parsed_args["temp"], stitched = false, subsample = parsed_args["subsample"])
       EXTRA = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_extra_SPECIAL","_$(chr).txt"),"w")
       REGIONS = open(string(parsed_args["out"],"/",parsed_args["prefix"],"_regions","_$(chr).txt"),"w")
       i = 1

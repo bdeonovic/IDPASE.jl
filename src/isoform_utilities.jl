@@ -437,7 +437,7 @@ function get_regions{U<:AbstractString,V<:Integer}(isoforms::Vector{GPDEntry{U,V
   return regions, regions_in_isoforms, effective_region_lengths, effective_isoform_lengths, exons, snp_idx, exons_in_isoforms, isoforms_with_alt, snps_in_isoforms
 end
 
-function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, mcmc_result_file::AbstractString, result_type::AbstractString, use_true::Bool=false)
+function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, mcmc_result_file::AbstractString, result_type::AbstractString, subsample::Float64=1.0, use_true::Bool=false)
   mcmc_results_vec = readlines(open(mcmc_result_file, "r"))
   num_mcmc_results = length(mcmc_results_vec)
   mcmc_results = Array(Any, length(mcmc_results_vec), 28)
@@ -475,10 +475,10 @@ function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,
     num_sr = [parse(Int64, s) for s in split(mcmc_results[i,2],",")][1]
 
     if mcmc_results[i,5] in keys(loci_dict)
-      if (mcmc_results[i,26] != result_type) || (mcmc_results[i,27] != 1.0) #"SGSSNY_1.0"
+      if (mcmc_results[i,26] != result_type) || (mcmc_results[i,27] !=1.0) #"SGSSNY_1.0"
         continue
       end
-      if (mcmc_results[i,8] == "NA") || (length(loci_dict[mcmc_results[i,5]].snps) != mcmc_results[i,4]) || num_sr > 10000
+      if (mcmc_results[i,8] == "NA") || (length(loci_dict[mcmc_results[i,5]].snps) != mcmc_results[i,4]) || num_sr > 50000
         println("deleting $(mcmc_results[i,5])")
         delete!(loci_dict, mcmc_results[i,5])
         continue
@@ -515,7 +515,9 @@ end
 function bin_reads{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, 
   isoform_dict::Dict{V, Array{GPDEntry{V, W},1}}, 
   prefix::AbstractString,temp_dir::AbstractString; stitched::Bool=true, 
-  verbose::Bool=false, verbose2::Bool=false, verbose3::Bool=false, use_true::Bool=false)
+  verbose::Bool=false, verbose2::Bool=false, verbose3::Bool=false, subsample::Float64=1.0, use_true::Bool=false)
+
+  println(STDERR, "subsample is $subsample")
   seen_dict = Set{ASCIIString}()
 
   gpd_file_name = "$(temp_dir)/$(prefix)_gpd.bed"
@@ -577,10 +579,13 @@ function bin_reads{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseE
         println(STDERR, "in exons $in_exons")
       end
       if haskey(loci.regions, Set(in_exons))
-        if read_name in seen_dict
+        if read_name in seen_dict 
           continue
         else
           push!(seen_dict, read_name)
+          if rand() > subsample
+            continue
+          end
         end
         loci.Y[loci.regions[Set(in_exons)]] += 1
         if verbose3
@@ -594,6 +599,9 @@ function bin_reads{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseE
   end
   for (gene_name, loci) in loci_dict
     for read_name in loci.read_names_order
+      if rand() > subsample
+        continue
+      end
       if read_name in seen_dict
         continue
       end
