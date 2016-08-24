@@ -21,20 +21,27 @@ Software is to be run on a linux system. To run IDPASE
   mkdir ~/temp/; mkdir ~/gene_files; mkdir ~/isoform_files; mkdir ~/gene_out; mkdir ~/isoform_out;
   julia ~/.julia/v0.4/IDPASE/src/prep_runs.jl -a test_data/SGS.psl test_data/TGS.psl -g test_data/TDRKH.gpd -v test_data/sim.vcf -q test_data/SGS.fq test_data/TGS.fq -d ~/temp/ -c 1 -f 1 1 -o ~/gene_files/ -p sim
   ```
+
   where flag ``-a`` is space separated list of PSL files, ``-g`` is GPD file, ``-v`` is VCF file, ``-q`` is space separated list of FASTQ files, ``-d`` is a directory for intermediate output, ``-c`` is a space separated list of chromosomes of interest, ``-f`` is a space separated list of FASTQ formats corresponding to the FASTQ files of ``-q``, where 1 indicates PHRED+33, and 2 indicates PHRED+64, and ``-o`` indicates output directory and output prefix (so in example /out/ is directory and output files will be prefixed by ``sim``). Make sure the directories specified exist such as ``~/temp`` and ``~/gene_files``.
 6. Get commands to run each gene individually
+
   ```bash
   julia  ~/.julia/v0.4/IDPASE/scripts/phase_by_loci.jl -a ~/gene_files/ -o ~/gene_out/ -n SGS TGS -m 1 0 0 1 1 1 -d ~/.julia/v0.4/IDPASE/scripts/ -p sim > to_run_curr.sh
   ```
+
   where ``-a`` is the ``-o`` flag from command in step 5, ``-o`` is an output directory, ``-n`` are unique names corresponding to PSL files, ``-m`` is a vector indicating which combinations of the seq data to use with IDPASE. In the above example 3 runs of IDPASE will be issued where ``1 0`` indicates SGS only, ``0 1`` indicates TGS only, and ``1 1`` indicates hybrid-Seq. ``p`` is the prefix specified in step 5. The output is a list of commands to run for each gene individually. The flag ``-d`` is the directory where the IDPASE scripts are stored. 
 7. Run each gene.
+
   ```bash
   bash to_run_curr.sh
   ```
+
 8. Concatenate all gene level results
+
   ```bash
    find ~/gene_out/ -name "REAL*" | xargs cat > ~/gene_out/gene_results.txt
   ```
+
   The output columns are Number of input files, comma seperated list of read
   counts from each input file, total reads used in analysis, number of SNV
   sites, gene name, isoform names, true haplotype (if VCF phased), MCMC
@@ -51,6 +58,7 @@ Software is to be run on a linux system. To run IDPASE
   ```bash
   julia ~/.julia/v0.4/IDPASE/src/prep_runs.jl -a test_data/SGS.psl test_data/TGS.psl -g test_data/TDRKH.gpd -v test_data/sim.vcf -q test_data/SGS.fq test_data/TGS.fq -d ~/temp/ -c 1 -f 1 1 -o ~/isoform_files/ -p sim -l 100 -i -s -e -r ~/gene_out/gene_results.txt
   ```
+
   where ``-l`` is read length for short reads, ``-s`` to skip file pre-processing (if using same GPD/VCF files are gene level), ``-e`` to use estimated haplotypes from gene leve, otherwise will use information from VCF, asumming it is phased, ``-r`` is the gene level results file. 
 10. Get commands to run each isoform individually
   
