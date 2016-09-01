@@ -689,7 +689,11 @@ function phase_isoform(isoform_data_file::AbstractString, line_num::Integer, out
 
   OUT = open(out_file_name,"w")
   try 
+    run_time = 0.0
+    tic()
     opt = phase_isoform_sub(y, ls, lk, C)
+    run_time += toc()
+
     conv = any([opt.iteration_converged, opt.f_converged, opt.g_converged, opt.x_converged])
     theta = exp(opt.minimum)
 
@@ -701,12 +705,12 @@ function phase_isoform(isoform_data_file::AbstractString, line_num::Integer, out
     tau = map(get_isof_rho,1:maximum(isoform_map))
     rho = sum(theta[1:maximum(isoform_map)])/sum(theta)
 
-    println(OUT,string(gene_name,"\t",rho,"\t",join(isoform_names,","),"\t",join(tau,","),"\t", join(theta,","),"\t",join(isoform_map,","),"\t",sum(y), "\t", join(lk,",") ))
+    println(OUT,string(gene_name,"\t",rho,"\t",join(isoform_names,","),"\t",join(tau,","),"\t", join(theta,","),"\t",join(isoform_map,","),"\t",sum(y), "\t", join(lk,","),"\t",run_time ))
   catch e
     showerror(STDERR, e, backtrace())
     println()
     println(STDERR, "Failed to optimize")
-    println(OUT,string(gene_name,"\t","NA","\t",join(isoform_names,","),"\t","NA","\t","NA","\t","NA","\t", sum(y), "\t", join(lk,","),"\t","NA"))
+    println(OUT,string(gene_name,"\t","NA","\t",join(isoform_names,","),"\t","NA","\t","NA","\t","NA","\t", sum(y), "\t", join(lk,","),"\t","NA","\t",0.0))
   end
   close(OUT)
 
@@ -955,6 +959,9 @@ function make_X_Q(args::Tuple{AbstractString, Dict})
   fpkm_dict = Dict{ASCIIString,Array{Float64,1}}()
   if parsed_args["fpkm"] != nothing
     @time fpkm_dict = get_fpkm(parsed_args["fpkm"])
+  end
+  if parsed_args["subsample"] == nothing
+    parsed_args["subsample"] = 1.0
   end
   if isoform
     println(STDERR, "Getting isoforms with SNPS...")
