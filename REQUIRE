@@ -1,7 +1,7 @@
-julia 0.4-
-Mamba 0.5.0 0.8.0
-ArgParse 0.2.11
+julia
+Mamba
+ArgParse
 Graphs
 Distributions
 StatsBase
-Clustering
+Combinatorics

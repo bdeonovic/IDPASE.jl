@@ -1,6 +1,6 @@
-function get_fpkm(fpkm_file_name::AbstractString)
+function get_fpkm(fpkm_file_name::String)
   fpkm_file = open(fpkm_file_name,"r")
-  fpkm_dict = Dict{ASCIIString, Array{Float64,1}}()
+  fpkm_dict = Dict{String, Array{Float64,1}}()
 
   for line in eachline(fpkm_file)
     fields = split(strip(line),"\t")
@@ -15,11 +15,11 @@ function get_fpkm(fpkm_file_name::AbstractString)
   return fpkm_dict
 end
 
-function init_loci(gpd_file_name::AbstractString, chr::AbstractString, num_src_types::Integer, fpkm_dict::Dict{ASCIIString, Array{Float64, 1}})
+function init_loci(gpd_file_name::String, chr::String, num_src_types::Integer, fpkm_dict::Dict{String, Array{Float64, 1}})
   gpd_file = open(gpd_file_name,"r")
-  isoform_dict = Dict{ASCIIString,Array{GPDEntry{ASCIIString,Int64},1}}()
-  loci_dict = Dict{ASCIIString,  IsoformPhaseEntry{ASCIIString, Int64}}()
-  transcripts = Dict{ASCIIString,Bool}()
+  isoform_dict = Dict{String,Array{GPDEntry{String,Int64},1}}()
+  loci_dict = Dict{String,  IsoformPhaseEntry{String, Int64}}()
+  transcripts = Dict{String,Bool}()
 
   for line in eachline(gpd_file)
     fields = split(strip(line),"\t")
@@ -40,14 +40,14 @@ function init_loci(gpd_file_name::AbstractString, chr::AbstractString, num_src_t
     end
 
     if !haskey(transcripts, fields[5])
-      isoform = GPDEntry{ASCIIString,Int64}(parse(Int64,fields[4]),fields[5],fields[6],fields[7],[parse(Int64,s) for s in fields[8:12]]...,block_starts,block_ends,parse(Int64,fields[15]),fields[16],fields[17],fields[18],frames)
+      isoform = GPDEntry{String,Int64}(parse(Int64,fields[4]),fields[5],fields[6],fields[7],[parse(Int64,s) for s in fields[8:12]]...,block_starts,block_ends,parse(Int64,fields[15]),fields[16],fields[17],fields[18],frames)
       if haskey(isoform_dict,fields[16])
         if !(fields[2] in [isoform_dict[fields[16]][j].name for j in 1:length(isoform_dict[fields[16]])])
           push!(isoform_dict[fields[16]],isoform)
         end
       else
         isoform_dict[fields[16]]   = [isoform]
-        loci = IsoformPhaseEntry{ASCIIString, Int64}(chr,Int64[],ASCIIString[],ASCIIString[],Dict{ASCIIString,Bool}(),Dict{ASCIIString,ASCIIString}(),Int64[],Int64[], NaN, true,PSLEntry{ASCIIString,Int64}[],ASCIIString[], ASCIIString[], fill(2,0,0),fill(1.0,0,0),zeros(Int64,num_src_types), fill(0,0,0), fill(0,0,0), fill(0,0,0), fill(0,0,0), Int64[], Int64[], DataStructures.OrderedDict{Set{Int64},Int64}(), Int64[], Int64[], Int64[] )
+        loci = IsoformPhaseEntry{String, Int64}(chr,Int64[],String[],String[],Dict{String,Bool}(),Dict{String,String}(),Int64[],Int64[], NaN, true,PSLEntry{String,Int64}[],String[], String[], fill(2,0,0),fill(1.0,0,0),zeros(Int64,num_src_types), fill(0,0,0), fill(0,0,0), fill(0,0,0), fill(0,0,0), Int64[], Int64[], DataStructures.OrderedDict{Set{Int64},Int64}(), Int64[], Int64[], Int64[] )
         loci_dict[fields[16]]  = loci
       end
       transcripts[fields[5]] = true
@@ -57,7 +57,7 @@ function init_loci(gpd_file_name::AbstractString, chr::AbstractString, num_src_t
   return isoform_dict, loci_dict, transcripts
 end
 
-function get_snps!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, gpd_file_name::V, vcf_file_name::V, temp_dir::V, chr::V, fpkm_dict::Dict{ASCIIString, Array{Float64,1}})
+function get_snps!{V<:String,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, gpd_file_name::V, vcf_file_name::V, temp_dir::V, chr::V, fpkm_dict::Dict{String, Array{Float64,1}})
   gpd_file = open(gpd_file_name,"r")
   gpd_with_snps = open("$(temp_dir)/$(chr)_gpd_with_snps.bed","w")
 
@@ -79,7 +79,7 @@ function get_snps!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseE
       end
     end
 
-    gpd = GPDEntry{ASCIIString,Int64}(parse(Int64,fields[4]),fields[5],fields[6],fields[7],[parse(Int64,s) for s in fields[8:12]]...,block_starts,block_ends,parse(Int64,fields[15]),fields[16],fields[17],fields[18],frames)
+    gpd = GPDEntry{String,Int64}(parse(Int64,fields[4]),fields[5],fields[6],fields[7],[parse(Int64,s) for s in fields[8:12]]...,block_starts,block_ends,parse(Int64,fields[15]),fields[16],fields[17],fields[18],frames)
     print_gpd(gpd_with_snps,gpd)
 
     if haskey(loci_dict,fields[16])
@@ -122,7 +122,7 @@ function get_snps!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseE
   close(gpd_with_snps)
 end
 
-function assemble_loci!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, isoform_dict::Dict{V, Array{GPDEntry{V, W},1}};
+function assemble_loci!{V<:String,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, isoform_dict::Dict{V, Array{GPDEntry{V, W},1}};
   read_length::Integer = 100, min_overlap_length::Integer=10, verbose::Bool = false, mean_insert_length::Integer=100)
   for (loci_name, loci) in loci_dict
     if verbose
@@ -167,7 +167,7 @@ function consecutive_groups(x::Vector{Int})
   end
   return result
 end
-function get_regions{U<:AbstractString,V<:Integer}(isoforms::Vector{GPDEntry{U,V}}, snps::Vector{V}, haplotype::Vector{V}, read_length::Int, min_overlap_length::Int, mean_insert_length::Int, verbose::Bool=false)
+function get_regions{U<:String,V<:Integer}(isoforms::Vector{GPDEntry{U,V}}, snps::Vector{V}, haplotype::Vector{V}, read_length::Int, min_overlap_length::Int, mean_insert_length::Int, verbose::Bool=false)
   num_real_isoforms = length(isoforms)
   starts = Int64[]
   ends = Int64[]
@@ -437,7 +437,7 @@ function get_regions{U<:AbstractString,V<:Integer}(isoforms::Vector{GPDEntry{U,V
   return regions, regions_in_isoforms, effective_region_lengths, effective_isoform_lengths, exons, snp_idx, exons_in_isoforms, isoforms_with_alt, snps_in_isoforms
 end
 
-function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, mcmc_result_file::AbstractString, result_type::AbstractString, subsample::Float64=1.0, use_true::Bool=false)
+function get_gene_level_results{V<:String,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, mcmc_result_file::String, result_type::String, subsample::Float64=1.0, use_true::Bool=false)
   mcmc_results_vec = readlines(open(mcmc_result_file, "r"))
   num_mcmc_results = length(mcmc_results_vec)
   mcmc_results = Array(Any, length(mcmc_results_vec), 28)
@@ -512,13 +512,13 @@ function get_gene_level_results{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,
   end
 end
 
-function bin_reads{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, 
+function bin_reads{V<:String,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}}, 
   isoform_dict::Dict{V, Array{GPDEntry{V, W},1}}, 
-  prefix::AbstractString,temp_dir::AbstractString; stitched::Bool=true, 
+  prefix::String,temp_dir::String; stitched::Bool=true, 
   verbose::Bool=false, verbose2::Bool=false, verbose3::Bool=false, subsample::Float64=1.0, use_true::Bool=false)
 
   println(STDERR, "subsample is $subsample")
-  seen_dict = Set{ASCIIString}()
+  seen_dict = Set{String}()
 
   gpd_file_name = "$(temp_dir)/$(prefix)_gpd.bed"
   psl_file_name = "$(temp_dir)/$(prefix)_psl_phase.bed"
@@ -538,7 +538,7 @@ function bin_reads{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseE
     gene_name = fields[40]
 
 
-    read = PSLEntry{ASCIIString,Int64}([parse(Int64,s) for s in fields[4:11]]...,fields[12],fields[13],[parse(Int64,s) for s in fields[14:16]]...,fields[17],[parse(Int64,s) for s in fields[18:21]]...,block_sizes,q_starts,t_starts)
+    read = PSLEntry{String,Int64}([parse(Int64,s) for s in fields[4:11]]...,fields[12],fields[13],[parse(Int64,s) for s in fields[14:16]]...,fields[17],[parse(Int64,s) for s in fields[18:21]]...,block_sizes,q_starts,t_starts)
 
     if haskey(loci_dict, gene_name)
       loci = loci_dict[gene_name]
@@ -726,7 +726,7 @@ function haplo_lik(x::AbstractVector, h::AbstractVector, q::AbstractVector, rho:
   return exp(value1) / (exp(value1) + exp(value2))
 end
 
-function add_phase_reads!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}},prefix::AbstractString,temp_dir::AbstractString, num_src_types::Int; whole_gpd::Bool=false)
+function add_phase_reads!{V<:String,W<:Integer}(loci_dict::Dict{V,IsoformPhaseEntry{V,W}},prefix::String,temp_dir::String, num_src_types::Int; whole_gpd::Bool=false)
   gpd_file_name = ""
   if whole_gpd
     gpd_file_name = "$(temp_dir)/$(prefix)_gpd.bed"
@@ -753,7 +753,7 @@ function add_phase_reads!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,Isofor
         target_coords  = vcat([ collect((t_starts[k]+1):(t_starts[k]+block_sizes[k])) for k in 1:length(t_starts)]...)
         if whole_gpd || length(intersect(target_coords,loci_dict[gene_name].snps))>0
           loci_dict[gene_name].read_names[read_name] = gene_name
-          push!(loci_dict[gene_name].reads, PSLEntry{ASCIIString,Int64}([parse(Int64,s) for s in fields[4:11]]...,fields[12],fields[13],[parse(Int64,s) for s in fields[14:16]]...,fields[17],[parse(Int64,s) for s in fields[18:21]]...,block_sizes,q_starts,t_starts))
+          push!(loci_dict[gene_name].reads, PSLEntry{String,Int64}([parse(Int64,s) for s in fields[4:11]]...,fields[12],fields[13],[parse(Int64,s) for s in fields[14:16]]...,fields[17],[parse(Int64,s) for s in fields[18:21]]...,block_sizes,q_starts,t_starts))
         end
       end
     end

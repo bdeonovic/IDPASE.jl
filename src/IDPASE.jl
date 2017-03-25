@@ -2,14 +2,14 @@ module IDPASE
 
   using Distributions
   using StatsBase
-  using Clustering
   using DataStructures
   using Mamba
   using Graphs
   using KernelDensity
   using Optim
+  using Combinatorics
   
-  immutable PSLEntry{V <: AbstractString, W <: Integer}
+  immutable PSLEntry{V <: String, W <: Integer}
     matches::W
     mismatches::W
     repmatches::W
@@ -33,7 +33,7 @@ module IDPASE
     t_starts::Vector{W}
   end
   
-  immutable GPDEntry{V <: AbstractString, W <: Integer}
+  immutable GPDEntry{V <: String, W <: Integer}
     bin::W
     name::V
     chr::V
@@ -51,7 +51,7 @@ module IDPASE
     cds_end_stat::V
     exon_frames::Vector{W}
   end
-  type IsoformPhaseEntry{U <:AbstractString, V <: Integer}
+  type IsoformPhaseEntry{U <:String, V <: Integer}
     chr::U
     snps::Vector{V}
     ref::Vector{U}
@@ -84,7 +84,7 @@ module IDPASE
     isoform_map::Vector{V}
     Y::Vector{V}
   end
-  type LociEntry{U <: AbstractString, V <: Integer}
+  type LociEntry{U <: String, V <: Integer}
     chr::U
     snps::Vector{V}
     ref::Vector{U}
@@ -111,7 +111,7 @@ module IDPASE
 
     X3::Matrix{V}
   end
-  type PhaseEntry{U <: AbstractString, V <: Integer}
+  type PhaseEntry{U <: String, V <: Integer}
     chr::U
     snps::Vector{V}
     ref::Vector{U}
@@ -132,7 +132,7 @@ module IDPASE
 
 
   abstract PHASEData
-  type PHASEDataReal{T <: AbstractString, U <: AbstractFloat, W <: Integer} <: PHASEData
+  type PHASEDataReal{T <: String, U <: AbstractFloat, W <: Integer} <: PHASEData
     read_counts::Vector{W}
     coords::Vector{W}
     gene_name::T
@@ -150,7 +150,7 @@ module IDPASE
     true_h::Vector{W}
   end
 
-  type PHASEDataSim{T <: AbstractString, U <: AbstractFloat, W <: Integer} <: PHASEData
+  type PHASEDataSim{T <: String, U <: AbstractFloat, W <: Integer} <: PHASEData
     read_counts::Vector{W}
     coords::Vector{W}
     gene_name::T
@@ -230,14 +230,15 @@ module IDPASE
     end
     s
   end
-  reversecomplement!(s::AbstractString,y::Array) = reversecomplement!(Char[s[i] for i in 1:length(s)],y)
+  reversecomplement!(s::String,y::Array) = reversecomplement!(Char[s[i] for i in 1:length(s)],y)
 
   reversecomplement(s::AbstractArray,y::Array) = reversecomplement!(copy(s),y)
-  reversecomplement(s::AbstractString,y::Array) = reversecomplement!(copy(s),y)
+  reversecomplement(s::String,y::Array) = reversecomplement!(copy(s),y)
 
 
   include("utilities.jl")
   include("isoform_utilities.jl")
+  include("chisqdiag.jl")
 
   export
   PSLEntry,
@@ -290,6 +291,4 @@ module IDPASE
     add_long_reads!,
     run_MCMC,
     simulate_data
-
-  
 end # module

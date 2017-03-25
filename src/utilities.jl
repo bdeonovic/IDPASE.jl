@@ -152,8 +152,8 @@ function build_gamma{W}(X::Matrix{W})
   unique(gamma)
 end
 
-function psl_to_bed(psl_file_name::AbstractString; smooth::Int64=68,chr::Vector{ASCIIString}=ASCIIString["chr$i" for i in [1:22;"X";"Y";"M"]],output_dir::AbstractString="",
-  output_file_name::ASCIIString="psl.bed")
+function psl_to_bed(psl_file_name::String; smooth::Int64=68,chr::Vector{String}=String["chr$i" for i in [1:22;"X";"Y";"M"]],output_dir::String="",
+  output_file_name::String="psl.bed")
 
   num_reads = 0
   psl = open(psl_file_name,"r")
@@ -198,8 +198,8 @@ function psl_to_bed(psl_file_name::AbstractString; smooth::Int64=68,chr::Vector{
   end
   return num_reads
 end
-function psl_to_bed2(psl_file_name::AbstractString; smooth::Int64=68,chr::Vector{ASCIIString}=ASCIIString["chr$i" for i in [1:22;"X";"Y";"M"]],output_dir::AbstractString="",
-  output_file_name::ASCIIString="psl.bed")
+function psl_to_bed2(psl_file_name::String; smooth::Int64=68,chr::Vector{String}=String["chr$i" for i in [1:22;"X";"Y";"M"]],output_dir::String="",
+  output_file_name::String="psl.bed")
 
   num_reads = 0
   psl = open(psl_file_name,"r")
@@ -234,8 +234,8 @@ function psl_to_bed2(psl_file_name::AbstractString; smooth::Int64=68,chr::Vector
   end
   return num_reads
 end
-function gpd_to_bed(gpd_file_name::AbstractString;chr::Vector{ASCIIString}=ASCIIString["chr$i" for i in [1:22;"X";"Y";"M"]],
-                    output_dir::AbstractString="",to_keep::Dict{AbstractString,Int64}=Dict{AbstractString,Int64}(), output_file_name::ASCIIString="gpd.bed")
+function gpd_to_bed(gpd_file_name::String;chr::Vector{String}=String["chr$i" for i in [1:22;"X";"Y";"M"]],
+                    output_dir::String="",to_keep::Dict{String,Int64}=Dict{String,Int64}(), output_file_name::String="gpd.bed")
   gpd = open(gpd_file_name,"r")
   out = [open(string(output_dir,"/",i,"_",output_file_name), "w") for i in chr]
   to_keep_flag = (length(to_keep)>0)
@@ -265,8 +265,8 @@ function gpd_to_bed(gpd_file_name::AbstractString;chr::Vector{ASCIIString}=ASCII
   end
   return nothing
 end
-function vcf_to_bed(vcf_file_name::AbstractString;chr::Vector{ASCIIString}=ASCIIString["chr$i" for i in [1:22;"X";"Y";"M"]],
-                      output_dir::AbstractString="",to_keep::Dict{AbstractString,Int64}=Dict{AbstractString,Int64}(), output_file_name::ASCIIString="vcf.bed")
+function vcf_to_bed(vcf_file_name::String;chr::Vector{String}=String["chr$i" for i in [1:22;"X";"Y";"M"]],
+                      output_dir::String="",to_keep::Dict{String,Int64}=Dict{String,Int64}(), output_file_name::String="vcf.bed")
   vcf = open(vcf_file_name,"r")
   out = [open(string(output_dir,"/",i,"_",output_file_name), "w") for i in chr]
   to_keep_flag = (length(to_keep)>0)
@@ -293,9 +293,9 @@ function vcf_to_bed(vcf_file_name::AbstractString;chr::Vector{ASCIIString}=ASCII
 
 end
 
-function process_gpd(gpd_file_name::AbstractString)
+function process_gpd(gpd_file_name::String)
   gpd_file = open(gpd_file_name,"r")
-  isoforms = Dict{SubString{ASCIIString},Array{GPDEntry{SubString{ASCIIString},Int64},1}}()
+  isoforms = Dict{SubString{String},Array{GPDEntry{SubString{String},Int64},1}}()
   for line in eachline(gpd_file)
     if ismatch(r"^#",line)
       continue
@@ -352,13 +352,13 @@ function print_gpd(io::IO,entry::GPDEntry, bed_start::Integer=0, bed_end::Intege
 end
 
 
-function initialize_loci(gpd_file_name::AbstractString, vcf_file_name::AbstractString, temp_dir::AbstractString, chr::AbstractString, num_src_types::Int,  fpkm_dict::Dict{ASCIIString, Array{Float64, 1}})
+function initialize_loci(gpd_file_name::String, vcf_file_name::String, temp_dir::String, chr::String, num_src_types::Int,  fpkm_dict::Dict{String, Array{Float64, 1}})
   gpd_file = open(gpd_file_name,"r")
   gpd_with_snps = open("$(temp_dir)/$(chr)_gpd_with_snps.bed","w")
 
-  isoforms = Dict{ASCIIString,Array{GPDEntry{ASCIIString,Int64},1}}()
-  loci_dict = Dict{ASCIIString,  PhaseEntry{ASCIIString, Int64}}()
-  transcripts = Dict{ASCIIString,Bool}()
+  isoforms = Dict{String,Array{GPDEntry{String,Int64},1}}()
+  loci_dict = Dict{String,  PhaseEntry{String, Int64}}()
+  transcripts = Dict{String,Bool}()
 
   for line in eachline(open(`bedtools intersect -wo -a $gpd_file_name -b $vcf_file_name`)[1])
     fields = split(strip(line),"\t")
@@ -414,7 +414,7 @@ function initialize_loci(gpd_file_name::AbstractString, vcf_file_name::AbstractS
       end
       loci_dict[fields[16]] = loci
     else
-      isoform = GPDEntry{ASCIIString,Int64}(parse(Int64,fields[4]),fields[5],fields[6],fields[7],[parse(Int64,s) for s in fields[8:12]]...,block_starts,block_ends,parse(Int64,fields[15]),fields[16],fields[17],fields[18],frames)
+      isoform = GPDEntry{String,Int64}(parse(Int64,fields[4]),fields[5],fields[6],fields[7],[parse(Int64,s) for s in fields[8:12]]...,block_starts,block_ends,parse(Int64,fields[15]),fields[16],fields[17],fields[18],frames)
       if haskey(isoforms,fields[16])
         #warn("Transcript $(fields[2]) already observed, skipping...")
         if isoforms[fields[16]][1].chr == chr
@@ -422,7 +422,7 @@ function initialize_loci(gpd_file_name::AbstractString, vcf_file_name::AbstractS
         end
       else
         isoforms[fields[16]]   = [isoform]
-        loci =PhaseEntry{ASCIIString, Int64}(chr,Int64[],ASCIIString[],ASCIIString[],Dict{ASCIIString,Bool}(),Dict{ASCIIString,ASCIIString}(),Int64[],true,PSLEntry{ASCIIString,Int64}[],ASCIIString[],fill(2,0,0),fill(1.0,0,0),zeros(Int64,num_src_types))
+        loci =PhaseEntry{String, Int64}(chr,Int64[],String[],String[],Dict{String,Bool}(),Dict{String,String}(),Int64[],true,PSLEntry{String,Int64}[],String[],fill(2,0,0),fill(1.0,0,0),zeros(Int64,num_src_types))
         loci_dict[fields[16]]  = loci
       end
       loci = loci_dict[fields[16]]
@@ -460,7 +460,7 @@ function initialize_loci(gpd_file_name::AbstractString, vcf_file_name::AbstractS
 end
 
 
-function add_reads!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,PhaseEntry{V,W}},prefix::AbstractString,temp_dir::AbstractString, num_src_types::Int; whole_gpd::Bool=false)
+function add_reads!{V<:String,W<:Integer}(loci_dict::Dict{V,PhaseEntry{V,W}},prefix::String,temp_dir::String, num_src_types::Int; whole_gpd::Bool=false)
   gpd_file_name = ""
   if whole_gpd
     gpd_file_name = "$(temp_dir)/$(prefix)_gpd.bed"
@@ -487,7 +487,7 @@ function add_reads!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,PhaseEntry{V
         target_coords  = vcat([ collect((t_starts[k]+round(Int64,block_sizes[k]*.1)):(t_starts[k]+round(Int64, block_sizes[k]*.90))) for k in 1:length(t_starts)]...)
         if whole_gpd || length(intersect(target_coords,loci_dict[gene_name].snps))>0
           loci_dict[gene_name].read_names[read_name] = gene_name
-          push!(loci_dict[gene_name].reads, PSLEntry{ASCIIString,Int64}([parse(Int64,s) for s in fields[4:11]]...,fields[12],fields[13],[parse(Int64,s) for s in fields[14:16]]...,fields[17],[parse(Int64,s) for s in fields[18:21]]...,block_sizes,q_starts,t_starts))
+          push!(loci_dict[gene_name].reads, PSLEntry{String,Int64}([parse(Int64,s) for s in fields[4:11]]...,fields[12],fields[13],[parse(Int64,s) for s in fields[14:16]]...,fields[17],[parse(Int64,s) for s in fields[18:21]]...,block_sizes,q_starts,t_starts))
         end
       end
     end
@@ -495,7 +495,7 @@ function add_reads!{V<:AbstractString,W<:Integer}(loci_dict::Dict{V,PhaseEntry{V
 end
 
 # format = 1 is Phred+33, format = 2 is Phred+64
-function extract_X_Q!(fastq_file_name::AbstractString, loci::Dict, reads::Dict, format::Integer=1, src::Int=1, verbose::Bool=false)
+function extract_X_Q!(fastq_file_name::String, loci::Dict, reads::Dict, format::Integer=1, src::Int=1, verbose::Bool=false)
   fastq = open(fastq_file_name,"r")
   i = 1
   read_name = ""
@@ -540,7 +540,7 @@ function extract_X_Q!(fastq_file_name::AbstractString, loci::Dict, reads::Dict, 
               query_snp_pos = query_coords[target_snp_pos[snps_detected]]
 
               snp_calls = fill("_",num_snps)
-              from_fasta = ASCIIString[]
+              from_fasta = String[]
               from_quality = ""
               if verbose
                 println(loci_name)
@@ -551,7 +551,7 @@ function extract_X_Q!(fastq_file_name::AbstractString, loci::Dict, reads::Dict, 
                 from_fasta = split(sequence[query_snp_pos],"")
                 from_quality = quality[query_snp_pos]
               else
-                from_fasta = split(convert(ASCIIString,reversecomplement(convert(ASCIIString,sequence),DNA_COMPLEMENT)[query_snp_pos]),"")
+                from_fasta = split(convert(String,reversecomplement(convert(String,sequence),DNA_COMPLEMENT)[query_snp_pos]),"")
                 from_quality = quality[reverse(length(quality) - query_snp_pos + 1)]
               end
               h = fill(3,num_snps)
@@ -622,12 +622,12 @@ function cleanup!(loci::Dict, max_snps=Inf)
       continue
     end
     g = build_gamma(value.X')
-    push!(result, PHASEDataReal{keytype(loci),Float64,Int64}(value.read_counts,value.snps,convert(SubString{ASCIIString},key),convert(SubString{ASCIIString},"NA"),value.chr,value.read_names_order,value.ref,value.alt,value.X',value.Q',g,value.true_h))
+    push!(result, PHASEDataReal{keytype(loci),Float64,Int64}(value.read_counts,value.snps,convert(SubString{String},key),convert(SubString{String},"NA"),value.chr,value.read_names_order,value.ref,value.alt,value.X',value.Q',g,value.true_h))
   end
   return result
 end
 
-function simulate_data{U<:AbstractString,V<:AbstractFloat,W<:Integer}(real_data::Vector{PHASEDataReal{U,V,W}},out_file_name::U, sim_rho::Bool=true)
+function simulate_data{U<:String,V<:AbstractFloat,W<:Integer}(real_data::Vector{PHASEDataReal{U,V,W}},out_file_name::U, sim_rho::Bool=true)
   sim_data = PHASEDataSim{U,V,W}[]
   out = open(out_file_name,"w")
   for k in 1:length(real_data)
@@ -668,7 +668,7 @@ function read_nth_lines(stream, num)
   return readline(stream)
 end
 
-function phase_isoform(isoform_data_file::AbstractString, line_num::Integer, out_file_name::AbstractString, sim::Bool, nsim::Int=10)
+function phase_isoform(isoform_data_file::String, line_num::Integer, out_file_name::String, sim::Bool, nsim::Int=10)
         
   IN = open(isoform_data_file,"r")
   line = read_nth_lines(IN, line_num)
@@ -748,7 +748,7 @@ function phase_isoform(isoform_data_file::AbstractString, line_num::Integer, out
   end
 end
 
-function read_data(true_data_file::AbstractString, read_file::AbstractString, line_num::Integer=1)
+function read_data(true_data_file::String, read_file::String, line_num::Integer=1)
   IN = open(true_data_file,"r")
   line = read_nth_lines(IN, line_num)
   close(IN)
@@ -784,7 +784,7 @@ function read_data(true_data_file::AbstractString, read_file::AbstractString, li
   read_names = split(fields[2],",")
 
   gamma = build_gamma(X)
-  PHASEDataReal{ASCIIString,Float64,Int64}(read_counts, snps, convert(ASCIIString,gene_name), convert(ASCIIString,isoform_name), convert(ASCIIString,chr), convert(Array{ASCIIString,1},read_names), convert(Array{ASCIIString,1}, ref), convert(Array{ASCIIString,1}, alt), X, Q, gamma, h0)
+  PHASEDataReal{String,Float64,Int64}(read_counts, snps, convert(String,gene_name), convert(String,isoform_name), convert(String,chr), convert(Array{String,1},read_names), convert(Array{String,1}, ref), convert(Array{String,1}, alt), X, Q, gamma, h0)
 end
 
 function convert_gamma{W<:Integer}(gamma::Vector{Vector{W}},d::W)
@@ -813,7 +813,7 @@ function phase(data::PHASEData,max_iters::Int64,burnin::Int64,nchains::Int64,met
   PHASE[:n] = length(reads_to_use)
 
   if PHASE[:m] == 1
-    model = Model(
+    gene_model = Model(
       X = Stochastic(1, (n,m,Q,hfull,rho) ->
             ASH(n,m,Q,convert(Array{Int64,1},hfull),convert(Float64,rho)),
           false
@@ -823,18 +823,37 @@ function phase(data::PHASEData,max_iters::Int64,burnin::Int64,nchains::Int64,met
     )
     inits = [ Dict{Symbol,Any}(:X => reshape(PHASE[:X],PHASE[:n]*PHASE[:m],1)[:], :rho => rand() ) for i in 1:nchains]
     scheme = [ Slice([:rho],[0.5],transform=true)]
-    setsamplers!(model,scheme)
+    setsamplers!(gene_model,scheme)
     tic()
-    sim =  mcmc(model, PHASE, inits, burnin+initial_iters, burnin=burnin, thin=1, chains=nchains)
+    sim =  mcmc(gene_model, PHASE, inits, burnin+initial_iters, burnin=burnin, thin=1, chains=nchains)
     run_time = toc()
-    while gelmandiag(sim[:,"rho",:]).value[1,2,1] > 1.2 && sim.model.iter < max_iters && run_time < 3600
+    X = hcat([mapslices(join, round(Int64, sim[:,:hfull,i].value),2) for i in 1:nchains]...)[:,:,1]
+
+    gd = gelmandiag(sim[:,"rho",:]).value[1,2,1]
+    cd = diag_all(X, :weiss, 100, size(X,1), size(X,1))[3]
+
+    n_gd_conv = sim.model.iter
+    n_cd_conv = sim.model.iter
+    #while gelmandiag(sim[:,"rho",:]).value[1,2,1] > 1.2 && sim.model.iter < max_iters && run_time < 3600
+    #  tic()
+    #  sim = mcmc(sim, 500)
+    #  run_time += toc()
+    #end
+    #return sim, run_time
+    while (gd > 1.2) && (sim.model.iter < max_iters) && (run_time < 18000)
+
       tic()
       sim = mcmc(sim, 500)
       run_time += toc()
+
+      if gd > 1.2
+        n_gd_conv += 500
+        gd = gelmandiag(sim[:,"rho",:]).value[1,2,1]
+      end
     end
-    return sim, run_time
+    return sim, run_time, n_gd_conv, n_cd_conv
   else
-    model = Model(
+    gene_model = Model(
       X = Stochastic(1, (n,m,Q,hfull,rho) ->
             ASH(n,m,Q,convert(Array{Int64,1},hfull),convert(Float64,rho)),
           false
@@ -853,24 +872,53 @@ function phase(data::PHASEData,max_iters::Int64,burnin::Int64,nchains::Int64,met
     scheme = NaN
     if method == 1
       #scheme = [ BMC3([:h], indexset = convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
-      scheme = [ BMC3([:h], convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
+      scheme = [ BMC3([:h], k=convert_gamma(data.gamma,PHASE[:m])), Slice([:rho],[0.5],transform=true)]
     elseif method == 2
       scheme = [ BMG([:h]), Slice([:rho],[0.5],transform=true)]
     elseif method == 3
       scheme = [ BHMC([:h], (2*PHASE[:m]+0.5)*pi), Slice([:rho],[0.5],transform=true)]
+      #scheme = [ BHMC([:h], ((1 + 0.5)*pi)), Slice([:rho],[0.5],transform=true)]
+    elseif method == 4
+      scheme = [ BMC3([:h]), Slice([:rho],[0.5],transform=true)]
+    elseif method == 5
+      if PHASE[:m] > 2
+        scheme = [ BIA([:h]), Slice([:rho],[0.5],transform=true)]
+      else
+        scheme = [ BMC3([:h]), Slice([:rho],[0.5],transform=true)]
+      end
     else
       error("No such Method")
     end
-    setsamplers!(model,scheme)
+    setsamplers!(gene_model,scheme)
     tic()
-    sim =  mcmc(model, PHASE, inits, burnin+initial_iters, burnin=burnin, thin=1, chains=nchains)
+    sim =  mcmc(gene_model, PHASE, inits, burnin+initial_iters, burnin=burnin, thin=1, chains=nchains)
     run_time = toc()
-    while gelmandiag(sim[:,"rho",:]).value[1,2,1] > 1.2 && sim.model.iter < max_iters && run_time < 18000
+    eX = hcat([mapslices(join, round(Int64, sim[:,:hfull,i].value),2) for i in 1:nchains]...)[:,:,1]
+
+    gd = gelmandiag(sim[:,"rho",:]).value[1,2,1]
+    cd = diag_all(eX, :weiss, 100, size(eX,1), size(eX,1))[3]
+
+    n_gd_conv = sim.model.iter
+    n_cd_conv = sim.model.iter
+
+    #while gelmandiag(sim[:,"rho",:]).value[1,2,1] > 1.2 && sim.model.iter < max_iters && run_time < 18000
+    while (gd > 1.2) && (cd > 0.05) && (sim.model.iter < max_iters) && (run_time < 18000)
       tic()
       sim = mcmc(sim, 500)
       run_time += toc()
+
+      if gd > 1.2
+        n_gd_conv += 500
+        gd = gelmandiag(sim[:,"rho",:]).value[1,2,1]
+      end
+      if cd > 0.05
+        n_cd_conv += 500
+        eX = hcat([mapslices(join, round(Int64, sim[:,:hfull,i].value),2) for i in 1:nchains]...)[:,:,1]
+        cd = diag_all(eX, :weiss, 100, size(eX,1), size(eX,1))[3]
+      end
+
     end
-    return sim, run_time
+    return sim, run_time, n_gd_conv, n_cd_conv
   end
 end
 function haplotype_map(sim::ModelChains)
@@ -895,7 +943,7 @@ function haplotype_map(sim::ModelChains)
   return (max_h, haplo_modes[max_h][2]/haplo_modes[max_h][1])
 end
 
-function run_MCMC(args::Tuple{PHASEData,Int64,Int64,Int64,Int64,Vector{Bool},Vector{ASCIIString},Float64}, ret_sim::Bool=false, initial_iters::Int64=500)
+function run_MCMC(args::Tuple{PHASEData,Int64,Int64,Int64,Int64,Vector{Bool},Vector{String},Float64}, ret_sim::Bool=false, initial_iters::Int64=500)
   data, iters, burnin, nchains, method, use_src, type_names, subsample = args
   n0 = 1
   reads_to_use = Int64[]
@@ -920,7 +968,7 @@ function run_MCMC(args::Tuple{PHASEData,Int64,Int64,Int64,Int64,Vector{Bool},Vec
   n = length(reads_to_use)
 
   if n > 0
-    sim, run_time  = phase(data,iters,burnin, nchains, method, reads_to_use, initial_iters)
+    sim, run_time,n_gd_conv,n_cd_conv  = phase(data,iters,burnin, nchains, method, reads_to_use, initial_iters)
 
     if ret_sim
       return sim
@@ -943,20 +991,20 @@ function run_MCMC(args::Tuple{PHASEData,Int64,Int64,Int64,Int64,Vector{Bool},Vec
 
     h_mode, cond_rho = haplotype_map(sim)
 
-    result1 = [length(data.read_counts),join(data.read_counts,","),n,m,data.gene_name,data.isoform_name, join(data.true_h,""),join(h_0,""), join(h_mode,""), cond_rho, rho_mode, q.value[1,3], d.value[1,1], q.value[1,1], q.value[1,5],hpd(sim).value[1,1],hpd(sim).value[1,2],d.value[1,5],run_time,g,lth,gth,sim.model.iter, sim.model.burnin, join(data.coords,","), type_name, subsample, join(read_counts_used,",")]  
+    result1 = [length(data.read_counts),join(data.read_counts,","),n,m,data.gene_name,data.isoform_name, join(data.true_h,""),join(h_0,""), join(h_mode,""), cond_rho, rho_mode, q.value[1,3], d.value[1,1], q.value[1,1], q.value[1,5],hpd(sim).value[1,1],hpd(sim).value[1,2],d.value[1,5],run_time,g,lth,gth,sim.model.iter, sim.model.burnin, join(data.coords,","), type_name, subsample, join(read_counts_used,","), n_gd_conv, n_cd_conv, method]  
     return result1
   else
-    result1 = [length(data.read_counts); join(data.read_counts,","); n; m; data.gene_name; data.isoform_name; join(data.true_h,""); ["NA" for i in 1:18]; type_name; subsample; join(read_counts_used,",")]  
+    result1 = [length(data.read_counts); join(data.read_counts,","); n; m; data.gene_name; data.isoform_name; join(data.true_h,""); ["NA" for i in 1:18]; type_name; subsample; join(read_counts_used,","); "NA";"NA"; "NA"]  
     return result1
   end
 end
-function make_X_Q(args::Tuple{AbstractString, Dict})
+function make_X_Q(args::Tuple{String, Dict})
   chr, parsed_args = args
   sim = parsed_args["simulate"]
   isoform = parsed_args["isoform"]
   num_src_types = length(parsed_args["psl"])
-  read_dict = Dict{ASCIIString,Set{ASCIIString}}()
-  fpkm_dict = Dict{ASCIIString,Array{Float64,1}}()
+  read_dict = Dict{String,Set{String}}()
+  fpkm_dict = Dict{String,Array{Float64,1}}()
   if parsed_args["fpkm"] != nothing
     @time fpkm_dict = get_fpkm(parsed_args["fpkm"])
   end
