@@ -10,29 +10,29 @@ function parse_commandline()
 
   @add_arg_table s begin
     "--psl", "-a"
-      arg_type = ASCIIString
+      arg_type = String
       nargs = '+'
       help = "sequence alignment files in PSL format"
       required = true
     "--fastq", "-q"
-      arg_type = ASCIIString
+      arg_type = String
       nargs = '+'
       help = "FASTQ files. Order matches order in PSL_FILES"
       required = true
     "--gpd", "-g"
-      arg_type = ASCIIString
+      arg_type = String
       help = "GPD file"
       required = true
     "--vcf", "-v"
-      arg_type = ASCIIString
+      arg_type = String
       help = "VCF file"
       required = true
     "--temp", "-d"
-      arg_type = ASCIIString
+      arg_type = String
       default = "temp"
       help = "Temporary directory"
     "--chr", "-c"
-      arg_type = ASCIIString
+      arg_type = String
       nargs = '+'
       help = "Chromosome Names"
       required = true
@@ -41,7 +41,7 @@ function parse_commandline()
       nargs = '+'
       help = "Phred format"
     "--out","-o"
-      arg_type = ASCIIString
+      arg_type = String
       help = "output dir"
     "--skip","-s"
       action = :store_true
@@ -53,22 +53,22 @@ function parse_commandline()
       action = :store_true
       help = "Isoform level estimation"
     "--results", "-r"
-      arg_type = ASCIIString
+      arg_type = String
       help = "MCMC results"
     "--type", "-t"
-      arg_type = ASCIIString
+      arg_type = String
       default = "SGSTGS"
     "--estimate", "-e"
       action = :store_true
     "--fpkm", "-k"
-      arg_type = ASCIIString
+      arg_type = String
     "--read_length", "-l"
       arg_type = Int
       default = 100
     "--only_sim", "-n"
       action = :store_true
     "--prefix", "-p"
-      arg_type = ASCIIString
+      arg_type = String
     "--subsample"
       arg_type = Float64
   end
@@ -107,7 +107,7 @@ function main()
   end
 
   args = collect(zip(parsed_args["chr"], 
-                    Dict{ASCIIString, Any}[parsed_args for i in 1:length(parsed_args["chr"])]))
+                    Dict{String, Any}[parsed_args for i in 1:length(parsed_args["chr"])]))
   @time pmap(make_X_Q, args)
 end
 

@@ -11,7 +11,7 @@ function parse_commandline()
 
   @add_arg_table s begin
     "--prefix", "-p"
-      arg_type = ASCIIString
+      arg_type = String
     "--iters", "-i"
       arg_type = Int
       default = 10000
@@ -25,17 +25,17 @@ function parse_commandline()
       default = 4
       help = "Number of chains"
     "--temp", "-d"
-      arg_type = ASCIIString
+      arg_type = String
       default = "temp"
       help = "Temporary directory"
     "--in", "-a"
-      arg_type = ASCIIString
+      arg_type = String
     "--out", "-o"
-      arg_type = ASCIIString
+      arg_type = String
       default = "out.txt"
       help = "Output directory"
     "--names", "-n"
-      arg_type = ASCIIString
+      arg_type = String
       nargs = '+'
       help = "Source names"
       default = ["SGS", "SNY", "SUB"]
@@ -47,7 +47,7 @@ function parse_commandline()
     "--schedule", "-s"
       arg_type = Float64
       nargs = '+'
-      default = [1.0, 0.5, 0.25, 0.125]
+      default = [1.0]# [1.0, 0.5, 0.25, 0.125]
   end
 
   return parse_args(s)
@@ -60,22 +60,22 @@ function main()
     println(STDERR, "  $arg  =>  $val")
   end
   matrix_comb = reshape(parsed_args["matrix"], length(parsed_args["names"]), round(Int64,length(parsed_args["matrix"])/length(parsed_args["names"])))
-  name_comb = Array(ASCIIString, size(matrix_comb,2))
+  name_comb = Array(String, size(matrix_comb,2))
 
   for i in 1:length(name_comb)
     name_comb[i] = join(parsed_args["names"][find(matrix_comb[:,i])])
   end
 
 
-  real_completed = Dict{ASCIIString, Array{Bool,1}}()
-  real_data = Dict{ASCIIString, Array{Bool,1}}()
+  real_completed = Dict{String, Array{Bool,1}}()
+  real_data = Dict{String, Array{Bool,1}}()
 
-  sim_completed = Dict{ASCIIString, Array{Bool,1}}()
-  sim_data = Dict{ASCIIString, Array{Bool,1}}()
+  sim_completed = Dict{String, Array{Bool,1}}()
+  sim_data = Dict{String, Array{Bool,1}}()
   for file in readdir(parsed_args["in"])
     m = match(Regex("$(parsed_args["prefix"])_(true|sim)_(\\w*).txt"),file)
     if m != nothing
-      num_loci = parse(Int64, split(readall(`wc -l $(parsed_args["in"])/$file`))[1]) * length(parsed_args["schedule"])
+      num_loci = parse(Int64, split(readstring(`wc -l $(parsed_args["in"])/$file`))[1])
       if m.captures[1] == "true"
         real_completed[m.captures[2]] = falses(num_loci)
       elseif m.captures[1] == "sim"

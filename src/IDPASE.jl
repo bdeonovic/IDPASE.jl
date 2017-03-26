@@ -9,7 +9,7 @@ module IDPASE
   using Optim
   using Combinatorics
   
-  immutable PSLEntry{V <: String, W <: Integer}
+  immutable PSLEntry{V <: AbstractString, W <: Integer}
     matches::W
     mismatches::W
     repmatches::W
@@ -33,7 +33,7 @@ module IDPASE
     t_starts::Vector{W}
   end
   
-  immutable GPDEntry{V <: String, W <: Integer}
+  immutable GPDEntry{V <: AbstractString, W <: Integer}
     bin::W
     name::V
     chr::V
@@ -51,7 +51,7 @@ module IDPASE
     cds_end_stat::V
     exon_frames::Vector{W}
   end
-  type IsoformPhaseEntry{U <:String, V <: Integer}
+  type IsoformPhaseEntry{U <:AbstractString, V <: Integer}
     chr::U
     snps::Vector{V}
     ref::Vector{U}
@@ -84,7 +84,7 @@ module IDPASE
     isoform_map::Vector{V}
     Y::Vector{V}
   end
-  type LociEntry{U <: String, V <: Integer}
+  type LociEntry{U <: AbstractString, V <: Integer}
     chr::U
     snps::Vector{V}
     ref::Vector{U}
@@ -111,7 +111,7 @@ module IDPASE
 
     X3::Matrix{V}
   end
-  type PhaseEntry{U <: String, V <: Integer}
+  type PhaseEntry{U <: AbstractString, V <: Integer}
     chr::U
     snps::Vector{V}
     ref::Vector{U}
@@ -132,7 +132,7 @@ module IDPASE
 
 
   abstract PHASEData
-  type PHASEDataReal{T <: String, U <: AbstractFloat, W <: Integer} <: PHASEData
+  type PHASEDataReal{T <: AbstractString, U <: AbstractFloat, W <: Integer} <: PHASEData
     read_counts::Vector{W}
     coords::Vector{W}
     gene_name::T
@@ -150,7 +150,7 @@ module IDPASE
     true_h::Vector{W}
   end
 
-  type PHASEDataSim{T <: String, U <: AbstractFloat, W <: Integer} <: PHASEData
+  type PHASEDataSim{T <: AbstractString, U <: AbstractFloat, W <: Integer} <: PHASEData
     read_counts::Vector{W}
     coords::Vector{W}
     gene_name::T
@@ -232,8 +232,8 @@ module IDPASE
   end
   reversecomplement!(s::String,y::Array) = reversecomplement!(Char[s[i] for i in 1:length(s)],y)
 
-  reversecomplement(s::AbstractArray,y::Array) = reversecomplement!(copy(s),y)
-  reversecomplement(s::String,y::Array) = reversecomplement!(copy(s),y)
+  reversecomplement(s::AbstractArray,y::Array) = reversecomplement!(identity(s),y)
+  reversecomplement(s::String,y::Array) = reversecomplement!(identity(s),y)
 
 
   include("utilities.jl")

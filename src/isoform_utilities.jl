@@ -794,7 +794,7 @@ function phase_isoform_sub(y::Vector{Int}, ls::Vector{Int}, lk::Vector{Int}, C::
   #d3 = TwiceDifferentiableFunction(negloglik, negscore!, neghessian!)
   init = log(M * ones(K)/K ./ lk)
   #optimize(d3, init, iterations=1000, method=:newton)
-  optimize(negloglik, negscore!, neghessian!, init, Newton(), OptimizationOptions(iterations=1000))
+  optimize(negloglik, negscore!, neghessian!, init, Newton(), Optim.Options(iterations=1000))
 end
 function phase_isoform_sub_sim(y::Vector{Int}, ls::Vector{Int}, lk::Vector{Int}, C::Matrix{Int}, map::Vector{Int})
   M = sum(y)

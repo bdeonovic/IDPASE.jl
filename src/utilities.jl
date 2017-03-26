@@ -695,7 +695,7 @@ function phase_isoform(isoform_data_file::String, line_num::Integer, out_file_na
     run_time += toc()
 
     conv = any([opt.iteration_converged, opt.f_converged, opt.g_converged, opt.x_converged])
-    theta = exp(opt.minimum)
+    theta = exp(opt.minimizer)
 
     function get_isof_rho(isoform::Int64)
       idx = find(x-> x==isoform, isoform_map)
@@ -725,7 +725,7 @@ function phase_isoform(isoform_data_file::String, line_num::Integer, out_file_na
 
         #conv = any([opt.iteration_converged, opt.f_converged, opt.gr_converged, opt.x_converged])
         conv = any([opt.iteration_converged, opt.f_converged, opt.g_converged, opt.x_converged])
-        theta = exp(opt.minimum)
+        theta = exp(opt.minimizer)
 
         function get_isof_rho(isoform::Int64)
           idx = find(x-> x==isoform, isoform_map)

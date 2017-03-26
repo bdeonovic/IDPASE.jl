@@ -11,9 +11,9 @@ function parse_commandline()
 
   @add_arg_table s begin
     "--in", "-i"
-      arg_type = ASCIIString
+      arg_type = String
     "--out", "-o"
-      arg_type = ASCIIString
+      arg_type = String
     "--line", "-l"
       arg_type = Int
       default = 1

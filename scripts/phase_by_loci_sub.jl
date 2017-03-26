@@ -11,7 +11,7 @@ function parse_commandline()
 
   @add_arg_table s begin
     "--true", "-t"
-      arg_type = ASCIIString
+      arg_type = String
     "--reads", "-a"
     "--iters", "-i"
       arg_type = Int
@@ -26,15 +26,15 @@ function parse_commandline()
       default = 4
       help = "Number of chains"
     "--temp", "-d"
-      arg_type = ASCIIString
+      arg_type = String
       default = "temp"
       help = "Temporary directory"
     "--out", "-o"
-      arg_type = ASCIIString
+      arg_type = String
       default = "out.txt"
       help = "Output directory"
     "--chr", "-r"
-      arg_type = ASCIIString
+      arg_type = String
       default = "chr1"
       help = "Chromosome"
     "--method","-e"
@@ -49,7 +49,7 @@ function parse_commandline()
       action = :store_true
       help = "Semi Simulation"
     "--names", "-n"
-      arg_type = ASCIIString
+      arg_type = String
       nargs = '+'
       help = "Source names"
       default = ["SGS", "SNY", "SUB"]
@@ -94,7 +94,8 @@ function main()
     end
     comb = join(source_names[use_src],"")
     OUT = open(string(parsed_args["out"],prefix,"::","$(comb)::$(k).txt"),"w")
-    writedlm(OUT,results')
+    #writedlm(OUT,results')
+    writedlm(OUT, reshape(results, 1, length(results)))
     close(OUT)
   end
 end

@@ -11,17 +11,17 @@ function parse_commandline()
 
   @add_arg_table s begin
     "--in", "-i"
-      arg_type = ASCIIString
+      arg_type = String
     "--out", "-o"
-      arg_type = ASCIIString
+      arg_type = String
     "--base", "-b"
-      arg_type = ASCIIString
+      arg_type = String
     "--sim", "-s"
       action = :store_true
     "--ase", "-a"
       action = :store_true
     "--prefix", "-p"
-      arg_type = ASCIIString
+      arg_type = String
   end
 
   return parse_args(s)
@@ -34,8 +34,8 @@ function main()
     println(STDERR, "  $arg  =>  $val")
   end
 
-  real_completed = Dict{ASCIIString, Array{Bool,1}}()
-  #real_data = Dict{ASCIIString, Bool}()
+  real_completed = Dict{String, Array{Bool,1}}()
+  #real_data = Dict{String, Bool}()
   prefix = ""
   if parsed_args["ase"]
     prefix = "EXTRA"
@@ -51,7 +51,7 @@ function main()
       m = match(Regex("$(parsed_args["prefix"])_non_ase_(\\w*).txt"),file)
     end
     if m != nothing
-      num_loci = parse(Int64, split(readall(`wc -l $(parsed_args["in"])/$file`))[1])
+      num_loci = parse(Int64, split(readstring(`wc -l $(parsed_args["in"])/$file`))[1])
       real_completed[m.captures[1]] = falses(num_loci)
     end
   end
