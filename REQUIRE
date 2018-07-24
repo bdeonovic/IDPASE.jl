@@ -1,5 +1,5 @@
-julia
-Mamba
+julia 0.5.0
+Mamba 0.10.0
 ArgParse
 Graphs
 Distributions
