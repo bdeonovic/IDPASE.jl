@@ -73,7 +73,7 @@ function main()
   sim_completed = Dict{String, Array{Bool,1}}()
   sim_data = Dict{String, Array{Bool,1}}()
   for file in readdir(parsed_args["in"])
-    m = match(Regex("$(parsed_args["prefix"])_(true|sim)_(\\w*).txt"),file)
+    m = match(Regex("$(parsed_args["prefix"])_(true|sim)_([\\w\\[\\]\\/\\.\\-]*).txt"),file)
     if m != nothing
       num_loci = parse(Int64, split(readstring(`wc -l $(parsed_args["in"])/$file`))[1])
       if m.captures[1] == "true"
@@ -84,7 +84,7 @@ function main()
     end
   end
   for file in readdir(parsed_args["out"])
-    m = match(Regex("(REAL|SIM)::(\\w*)::(\\d*)::([\\w\\[\\]\\/\\.\\-]*)::($(join(name_comb,"|")))::(\\d*).txt"),file)
+    m = match(Regex("(REAL|SIM)::([\\w\\[\\]\\/\\.\\-]*)::(\\d*)::([\\w\\[\\]\\/\\.\\-]*)::($(join(name_comb,"|")))::(\\d*).txt"),file)
     if m != nothing
       sim = m.captures[1]
       chr = m.captures[2]
