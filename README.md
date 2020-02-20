@@ -1,3 +1,5 @@
+Note this software is not being maintained any longer. 
+
 # IDPASE
 
 Software is to be run on a linux system. To run IDPASE 
